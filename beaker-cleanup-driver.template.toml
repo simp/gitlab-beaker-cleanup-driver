@@ -1,0 +1,26 @@
+[[runners]]
+  name = "beaker-cleanup-driver"
+  url = "https://gitlab.com/"
+  token = "xxxxx"
+  executor = "custom"
+
+  builds_dir = "/home/gitlab-runner/builds"
+  cache_dir = "/home/gitlab-runner/cache"
+
+  # GIT_STRATEGY=clone permits Runners on CentOS 7 to use git 1.8.3.1 (instead
+  # of git 2+).  Without this variable, CentOS7 runners will consistently fail
+  # after the first checkout of a project with the error:
+  #
+  #         fatal: git fetch-pack: expected shallow list
+  #
+  environment = ["GIT_STRATEGY=clone"]
+
+  # 'debug' adds STDOUT from cleanup_exec.sh to gitlab-runner's journald logs
+  log_level = "debug"
+  [runners.custom_build_dir]
+  [runners.cache]
+  [runners.custom]
+  config_exec = "/opt/simp/gitlab-runner/beaker-cleanup-driver/config_exec.sh"
+  prepare_exec = "/opt/simp/gitlab-runner/beaker-cleanup-driver/prepare_exec.sh"
+  run_exec = "/opt/simp/gitlab-runner/beaker-cleanup-driver/run_exec.sh"
+  cleanup_exec = "/opt/simp/gitlab-runner/beaker-cleanup-driver/cleanup_exec.sh"
