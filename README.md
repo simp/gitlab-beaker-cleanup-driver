@@ -5,7 +5,7 @@
 * [Description](#description)
 * [Setup](#setup)
   * [1. Installing the executor files](#1-installing-the-executor-files)
-  * [Registering new Runne(s) using the configration template file](#registering-new-runnes-using-the-configration-template-file)
+  * [2. Registering new Runner(s) using the configuration template file](#2-registering-new-runners-using-the-configuration-template-file)
 * [Reference](#reference)
   * [How the executor knows what VMs to clean up](#how-the-executor-knows-what-vms-to-clean-up)
   * [Troubleshooting](#troubleshooting)
@@ -48,14 +48,14 @@ chgrp -R gitlab-runner "$CUSTOM_EXECUTOR_DIR"
 chmod -R g=u-w "$CUSTOM_EXECUTOR_DIR"
 ```
 
-### Registering new Runne(s) using the configration template file
+### 2. Registering new Runner(s) using the configuration template file
 
 A Gitlab Runner [configuration template file][configuration template file] is provided to simplify registration.
 
 1. Tailor the template file `beaker-cleanup-driver.template.toml`
 
    * Make sure the `_exec` entries in the `[runners.custom]` section are under the
-     path where you clonde the repository (`$CUSTOM_EXECUTOR_DIR`).
+     path where you cloned the repository (`$CUSTOM_EXECUTOR_DIR`).
    * Tailor settings to taste (not everybody needs `log_level = 'debug')
 
 2. Register a new GitLab Runner using the `--template-config` option:
@@ -90,7 +90,7 @@ environment variable:
    to that value will be cleaned up.
    - Running VirtualBox VMs will be shut down and deleted
    - `vagrant global-status --prune` will run if any VMs were shut down
-   - after a short grace period, all remaining processes 
+   - after a short grace period, all remaining processes
 4. The environment variables are found by grepping `/proc/*/environ` for the
    job's unique `$_CI_JOB_TAG` value
 5. VMs are idenitified by grepping each `$_CI_JOB_TAG` pid's associated
@@ -117,7 +117,7 @@ single job.  To see a specific job's progress, grep for the job's unique
 `_CI_JOB_TAG` value (shown in the Runner console output at the beginning of
 every exec stage and sub-stage):
 
-        journalctl -t beaker-cleanup-driver -n 3000 -e  | egrep _CI_JOB_TAG=runner-1751173-project-17669670-concurrent-0-487152645 -A5 -B6 | less 
+        journalctl -t beaker-cleanup-driver -n 3000 -e  | egrep _CI_JOB_TAG=runner-1751173-project-17669670-concurrent-0-487152645 -A5 -B6 | less
 
 #### journald logs for `gitlab-runner` unit
 
@@ -133,7 +133,7 @@ You can follow the unit's log via `journalctl`:
 The gitlab-runner's log can have a lot of noise in addition to the executor
 output To help filter the noise, you can grep the logs:
 
-        journalctl -u gitlab-runner  -e -n 3000   | egrep '==|--' | less 
+        journalctl -u gitlab-runner  -e -n 3000   | egrep '==|--' | less
 
 To follow a specific job's progress, grep for the _CI_JOB_TAG value (shown in
 the Runner console output at the beginning of every exec stage and sub-stage):
@@ -141,7 +141,7 @@ the Runner console output at the beginning of every exec stage and sub-stage):
         journalctl -u gitlab-runner -e | grep _CI_JOB_TAG=runner-1751173-project-17669670-concurrent-0-485904412
 
 
-**Limitations:** 
+**Limitations:**
 
 * The `gitlab-runner` journald log only includes output from the
   `cleanup_exec` script (when `log_level` is `warn` or higher), and there can be
