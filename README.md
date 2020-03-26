@@ -1,5 +1,19 @@
 # Beaker Cleanup Driver for GitLab Runners
 
+<!-- vim-markdown-toc GFM -->
+
+* [Description](#description)
+* [Setup](#setup)
+  * [1. Installing the executor files](#1-installing-the-executor-files)
+  * [Registering new Runne(s) using the configration template file](#registering-new-runnes-using-the-configration-template-file)
+* [Reference](#reference)
+  * [How the executor knows what VMs to clean up](#how-the-executor-knows-what-vms-to-clean-up)
+  * [Troubleshooting](#troubleshooting)
+    * [journald logs on syslog identifier `beaker-cleanup-driver`](#journald-logs-on-syslog-identifier-beaker-cleanup-driver)
+    * [journald logs for `gitlab-runner` unit](#journald-logs-for-gitlab-runner-unit)
+
+<!-- vim-markdown-toc -->
+
 ## Description
 
 A GitLab CI Runner [custom executor][custom executor] designed to run the
