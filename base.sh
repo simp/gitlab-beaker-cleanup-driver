@@ -58,7 +58,7 @@ ci_job_stop_vbox()
       local vbox_vm="${pid_cmdline[2]}"
       local vbox_uuid="${pid_cmdline[4]}"
       found_vbox_vms+=("$vbox_uuid")
-      warn "==== Deleting running VirtualBox VM '${vbox_vm}' (UUID='${vbox_uuid}') (pid="$pid")"
+      warn "==== Deleting running VirtualBox VM '${vbox_vm}' (UUID='${vbox_uuid}') (pid='$pid')"
       vboxmanage controlvm "$vbox_uuid" poweroff
       vboxmanage unregistervm "$vbox_uuid" --delete
     fi
@@ -75,7 +75,7 @@ ci_job_stop_vbox()
 
 # Start / stop a CI job
 #   start = keeping track of all child processes via $_CI_JOB_TAG
-#   stop 
+#   stop
 ci_job()
 {
   case "$1" in
@@ -92,13 +92,13 @@ ci_job()
     unset _CI_JOB_TAG  # don't kill ourselves
     local pids=($(ci_job_pids "$___ci_job_tag"))
     if [ "${#pids[@]}" -gt 0 ]; then
-       warn "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$_CI_JOB_TAG)"
+      warn "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$___ci_job_tag)"
        for pid in "${pids[@]}"; do
          warn "==   $pid    $(cat /proc/$pid/cmdline || true)"
        done
        kill "${pids[@]}"
     fi
-    notice "== Done stopping CI VMs + processes (with _CI_JOB_TAG=$_CI_JOB_TAG)"
+    notice "== Done stopping CI VMs + processes (with _CI_JOB_TAG=$___ci_job_tag)"
     ;;
   esac
 }
