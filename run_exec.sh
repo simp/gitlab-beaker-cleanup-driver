@@ -10,6 +10,7 @@
 # * See: https://docs.gitlab.com/runner/executors/custom.html#run
 # ------------------------------------------------------------------------------
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# shellcheck source=base.sh
 source "${script_dir}/base.sh"
 
 notice "  +--- Run sub stage $2 ---+: $1 (_CI_JOB_TAG=$_CI_JOB_TAG)"

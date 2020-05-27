@@ -27,6 +27,7 @@ notice "$(printf "\n\n%s\n\n    %s\n\n    _CI_JOB_TAG=%s\n%s\n\n" "$banner" "${2
 ci_job_pids()
 {
   local __CI_JOB_TAG"=${_CI_JOB_TAG:-$1}"
+  # shellcheck disable=SC2153
   grep -l "\b_CI_JOB_TAG=$__CI_JOB_TAG\b" /proc/*/environ | cut -d/ -f3
 }
 
