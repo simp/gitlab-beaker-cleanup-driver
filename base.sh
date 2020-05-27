@@ -95,7 +95,7 @@ ci_job()
     if [ "${#pids[@]}" -gt 0 ]; then
       warn "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$___ci_job_tag)"
        for pid in "${pids[@]}"; do
-         warn "==   $pid    $(cat /proc/$pid/cmdline || true)"
+         warn "==   $pid    $(cat "/proc/$pid/cmdline" || true)"
        done
        kill "${pids[@]}"
     fi
