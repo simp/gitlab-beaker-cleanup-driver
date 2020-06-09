@@ -82,6 +82,27 @@ ci_job_stop_vbox()
   fi
 }
 
+ci_job_ensure_user_can_access_script()
+{
+  chown "$CI_RUNNER_USER" "$1"
+  # shellcheck disable=SC2016
+  [ -z "${TMPDIR:-}" ] && warn 'ci_job start: $TMPDIR env var is empty!'
+  if [[ "$1" == "$TMPDIR"* ]]; then
+    chown -R "$CI_RUNNER_USER" "$TMPDIR"
+  else
+    warn "ci_job start: TMPDIR does NOT contain the target script! (TMPDIR='$TMPDIR' script='$1')"
+    warn "ci_job start (cont'd): build will probably fail with 'permission denied errors'"
+  fi
+
+  local utmpdir="$(runuser -l "$CI_RUNNER_USER" -c 'mktemp /tmp/beaker-cleanup-driver.XXXXXXXXXX' )"
+  if ! runuser -l "$CI_RUNNER_USER" -c "namei -l '$1' &> '$utmpdir' "; then
+    warn "$(cat "$utmpdir")"
+    warn "ci_job start: FATAL: user $CI_RUNNER_USER cannot access '$1' (or one of its parents)!"
+    rm -f "$utmpdir"
+    echo exit 2
+  fi
+}
+
 # Start / stop a CI job
 #   start = keeping track of all child processes via $_CI_JOB_TAG
 #   stop
@@ -89,17 +110,8 @@ ci_job()
 {
   case "$1" in
   start)
-    #_CI_JOB_TAG="$_CI_JOB_TAG" "$2"
-    chown "$CI_RUNNER_USER" "$2"
-    
-    [ -z "${TMPDIR:-}" ] && warn '$TMPDIR env var is empty!'
-    if [[ "$2" == "$TMPDIR"* ]]; then
-      chown -R "$CI_RUNNER_USER" "$TMPDIR"
-    else
-      warn "TMPDIR does NOT contain the target script!  (TMPDIR='$TMPDIR' script='$2')"
-    fi
-
-    runuser -l gitlab-runner -c "export _CI_JOB_TAG='$_CI_JOB_TAG';  '$2'"
+    ci_job_ensure_user_can_access_script "$2"
+    runuser -l "$CI_RUNNER_USER" -c "export _CI_JOB_TAG='$_CI_JOB_TAG'; '$2'"
     ;;
   stop)
     notice "== Stopping all related processes (with _CI_JOB_TAG=$_CI_JOB_TAG)"
