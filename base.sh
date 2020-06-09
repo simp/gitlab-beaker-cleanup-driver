@@ -94,7 +94,10 @@ ci_job_ensure_user_can_access_script()
     warn "ci_job start (cont'd): build will probably fail with 'permission denied errors'"
   fi
 
-  local utmpdir="$(runuser -l "$CI_RUNNER_USER" -c 'mktemp /tmp/beaker-cleanup-driver.XXXXXXXXXX' )"
+  # Use namei to validate that the non-priv $CI_RUNNER_USER can access the
+  # script AND its parent directories (required by the custom executor)
+  local utmpdir
+  utmpdir="$(runuser -l "$CI_RUNNER_USER" -c 'mktemp /tmp/beaker-cleanup-driver.XXXXXXXXXX' )"
   if ! runuser -l "$CI_RUNNER_USER" -c "namei -l '$1' &> '$utmpdir' "; then
     warn "$(cat "$utmpdir")"
     warn "ci_job start: FATAL: user $CI_RUNNER_USER cannot access '$1' (or one of its parents)!"
@@ -115,13 +118,14 @@ ci_job()
     ;;
   stop)
     notice "== Stopping all related processes (with _CI_JOB_TAG=$_CI_JOB_TAG)"
-    local pids=($(ci_job_pids))
+    local pids
+    pids=($(ci_job_pids))
     ci_job_stop_vbox "${pids[@]:-}"
 
     sleep 8 # give post-VM processes a little time to die
     local ___ci_job_tag="$_CI_JOB_TAG"
     unset _CI_JOB_TAG  # don't kill ourselves
-    local pids=($(ci_job_pids "$___ci_job_tag"))
+    pids=($(ci_job_pids "$___ci_job_tag"))
     if [ "${#pids[@]}" -gt 0 ]; then
       warn "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$___ci_job_tag)"
        for pid in "${pids[@]}"; do
