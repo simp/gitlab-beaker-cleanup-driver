@@ -8,6 +8,7 @@
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # shellcheck source=base.sh
 source "${script_dir}/base.sh"
+banner "$(basename --suffix='.sh' "${BASH_SOURCE[0]}")"
 
 #
 # NOTE: There's nothing this stage needs to do (so far).

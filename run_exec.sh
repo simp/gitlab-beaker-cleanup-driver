@@ -12,7 +12,13 @@
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # shellcheck source=base.sh
 source "${script_dir}/base.sh"
+banner "$(basename --suffix='.sh' "${BASH_SOURCE[0]}")[ $2 ]"
 
 notice "  +--- Run sub stage $2 ---+: $1 (_CI_JOB_TAG=$_CI_JOB_TAG)"
+
+env > "/tmp/custom_executor.$2.env"
+echo "$1" > "/tmp/custom_executor.script-path.$2.txt"
+cat "$1" > "/tmp/custom_executor.script-content.$2.txt"
+
 
 ci_job start "$1"

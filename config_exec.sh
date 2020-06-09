@@ -5,11 +5,18 @@
 # * Provides GitLab with information about the custom executor/"driver"
 # * See: https://docs.gitlab.com/runner/executors/custom.html#config
 # ------------------------------------------------------------------------------
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# shellcheck source=base.sh
+source "${script_dir}/base.sh" >/dev/null 2>&1
+
 cat << JSON
 {
   "driver": {
     "name": "SIMP beaker cleanup driver",
-    "version": "v0.3.0"
-  }
+    "version": "v0.4.0"
+  },
+  "builds_dir": "${CI_RUNNER_USER_DIR}/builds/${CUSTOM_ENV_CI_RUNNER_SHORT_TOKEN}/${CUSTOM_ENV_CI_CONCURRENT_PROJECT_ID}/${CUSTOM_ENV_CI_PROJECT_PATH_SLUG}",
+  "cache_dir":  "${CI_RUNNER_USER_DIR}/cache/${CUSTOM_ENV_CI_RUNNER_SHORT_TOKEN}/${CUSTOM_ENV_CI_CONCURRENT_PROJECT_ID}/${CUSTOM_ENV_CI_PROJECT_PATH_SLUG}"
+
 }
 JSON

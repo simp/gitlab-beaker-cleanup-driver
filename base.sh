@@ -9,6 +9,10 @@ set -o pipefail
 
 _CI_JOB_TAG="${_CI_JOB_TAG:-"runner-${CUSTOM_ENV_CI_RUNNER_ID}-project-${CUSTOM_ENV_CI_PROJECT_ID}-concurrent-${CUSTOM_ENV_CI_CONCURRENT_PROJECT_ID}-${CUSTOM_ENV_CI_JOB_ID}"}"
 
+# Non-privileged user to execute the actual job script
+CI_RUNNER_USER="${CI_RUNNER_USER:-gitlab-runner}"
+CI_RUNNER_USER_DIR="${CI_RUNNER_USER_DIR:-/var/lib/$CI_RUNNER_USER}"
+
 notice()
 {
   echo "${@}"
@@ -21,8 +25,12 @@ warn()
   logger -t beaker-cleanup-driver "${@}"
 }
 
-banner="======================================="
-notice "$(printf "\n\n%s\n\n    %s\n\n    _CI_JOB_TAG=%s\n%s\n\n" "$banner" "${2:-${1:-$0}}" "$_CI_JOB_TAG" "$banner")"
+
+banner()
+{
+  banner="======================================="
+  notice "$(printf "\n\n%s\n\n    %s:  _CI_JOB_TAG=%s\n%s\n\n" "$banner" "${2:-${1:-$0}}" "$_CI_JOB_TAG" "$banner")"
+}
 
 ci_job_pids()
 {
@@ -81,12 +89,22 @@ ci_job()
 {
   case "$1" in
   start)
-    _CI_JOB_TAG="$_CI_JOB_TAG" "$2"
+    #_CI_JOB_TAG="$_CI_JOB_TAG" "$2"
+    chown "$CI_RUNNER_USER" "$2"
+    
+    [ -z "${TMPDIR:-}" ] && warn '$TMPDIR env var is empty!'
+    if [[ "$2" == "$TMPDIR"* ]]; then
+      chown -R "$CI_RUNNER_USER" "$TMPDIR"
+    else
+      warn "TMPDIR does NOT contain the target script!  (TMPDIR='$TMPDIR' script='$2')"
+    fi
+
+    runuser -l gitlab-runner -c "export _CI_JOB_TAG='$_CI_JOB_TAG';  '$2'"
     ;;
   stop)
     notice "== Stopping all related processes (with _CI_JOB_TAG=$_CI_JOB_TAG)"
     local pids=($(ci_job_pids))
-    ci_job_stop_vbox "${pids[@]}"
+    ci_job_stop_vbox "${pids[@]:-}"
 
     sleep 8 # give post-VM processes a little time to die
     local ___ci_job_tag="$_CI_JOB_TAG"
