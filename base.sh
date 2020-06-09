@@ -57,7 +57,8 @@ ci_job_stop_vbox()
   if [ $# -gt 0 ]; then
     local pids=("$@")
   else
-    local pids=($(ci_job_pids))
+    warn "== no pids to check"
+    return 0
   fi
 
   local found_vbox_vms=()
@@ -106,9 +107,25 @@ ci_job_ensure_user_can_access_script()
   fi
 }
 
+ci_job_kill_procs()
+{
+  warn "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$___ci_job_tag)"
+  if [ $# -gt 0 ]; then
+    local pids=("$@")
+  else
+    warn "== no pids to check" && return 0
+  fi
+  for pid in "${pids[@]}"; do
+    warn "==   $pid    $(cat "/proc/$pid/cmdline" || true)"
+  done
+  kill "${pids[@]}"
+}
+
 # Start / stop a CI job
-#   start = keeping track of all child processes via $_CI_JOB_TAG
-#   stop
+#   $1:
+#     start = execute script, setting $_CI_JOB_TAG on all child processes
+#     stop  = kill any processes
+#   $2: script to execute
 ci_job()
 {
   case "$1" in
@@ -118,21 +135,18 @@ ci_job()
     ;;
   stop)
     notice "== Stopping all related processes (with _CI_JOB_TAG=$_CI_JOB_TAG)"
-    local pids
-    pids=($(ci_job_pids))
-    ci_job_stop_vbox "${pids[@]:-}"
-
-    sleep 8 # give post-VM processes a little time to die
     local ___ci_job_tag="$_CI_JOB_TAG"
     unset _CI_JOB_TAG  # don't kill ourselves
-    pids=($(ci_job_pids "$___ci_job_tag"))
+    local pids
+
+    pids=($(ci_job_pids "$___ci_job_tag")) || true
     if [ "${#pids[@]}" -gt 0 ]; then
-      warn "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$___ci_job_tag)"
-       for pid in "${pids[@]}"; do
-         warn "==   $pid    $(cat "/proc/$pid/cmdline" || true)"
-       done
-       kill "${pids[@]}"
+      ci_job_stop_vbox "${pids[@]}"
+      sleep 8 # give post-VM processes a little time to die
+      pids=($(ci_job_pids "$___ci_job_tag")) || true
+      ci_job_kill_procs "${pids[@]}"
     fi
+
     notice "== Done stopping CI VMs + processes (with _CI_JOB_TAG=$___ci_job_tag)"
     ;;
   esac
