@@ -3,6 +3,7 @@
 <!-- vim-markdown-toc GFM -->
 
 * [Description](#description)
+* [Requirements](#requirements)
 * [Setup](#setup)
   * [1. Installing the executor files](#1-installing-the-executor-files)
   * [2. Registering new Runner(s) using the configuration template file](#2-registering-new-runners-using-the-configuration-template-file)
@@ -10,21 +11,35 @@
   * [How the executor knows what VMs to clean up](#how-the-executor-knows-what-vms-to-clean-up)
   * [Troubleshooting](#troubleshooting)
     * [journald logs on syslog identifier `beaker-cleanup-driver`](#journald-logs-on-syslog-identifier-beaker-cleanup-driver)
-    * [journald logs for `gitlab-runner` unit](#journald-logs-for-gitlab-runner-unit)
+    * [journald logs for `gitlab-runner` service](#journald-logs-for-gitlab-runner-service)
+      * [Limitations](#limitations)
 
 <!-- vim-markdown-toc -->
 
+![](assets/beaker-cleanup-driver.gif)
+
 ## Description
 
-A GitLab CI Runner [custom executor][custom executor] designed to run the
-[Beaker][beaker] Puppet acceptance testing harness, but without eating hundreds
-of gigs of space and RAM over time like the shell executor does.
+**beaker-cleanup-driver** is a GitLab CI runner [custom executor][custom
+executor] that properly cleans up each CI job's child processes and VMs―even if
+the job failed, was cancelled, or timed out (probably).
 
-* Ensures that any Virtual Box VMs/processes created during a job are
-  cleaned up after it finishes.
-* Unlike the shell executor, it cleans up a job's VMs/processes―even if the
-  job failed, was cancelled, or timed out (I think)
-* Designed as a drop-in replacement for the default `shell` executor
+1. Drop-in alternative to the shell executor
+2. Tracks all processes created by a CI job and stops them after it terminates.
+3. Includes special logic to clean up Virtual Box VMs and Vagrant sessions
+   * (Using their respective tooling in order to properly reclaim their disk resources)
+
+It is designed to run multi-node acceptance tests using Puppet's
+[Beaker][beaker] while avoiding the of the shell executor's tendency to
+accumulate hundreds of gigs of disk space and running VM processes, left
+over from jobs that didn't terminate cleanly.
+
+
+## Requirements
+
+* Gitlab CI Runner 11+
+* Linux host (tested on CentOS 7)
+* bash
 
 ## Setup
 
@@ -119,7 +134,7 @@ every exec stage and sub-stage):
 
         journalctl -t beaker-cleanup-driver -n 3000 -e  | egrep _CI_JOB_TAG=runner-1751173-project-17669670-concurrent-0-487152645 -A5 -B6 | less
 
-#### journald logs for `gitlab-runner` unit
+#### journald logs for `gitlab-runner` service
 
 The `gitlab-runner` unit's journald log can also be useful for correlating the
 Runner's communication and setup events during troubleshooting.  Depending on
@@ -141,10 +156,10 @@ the Runner console output at the beginning of every exec stage and sub-stage):
         journalctl -u gitlab-runner -e | grep _CI_JOB_TAG=runner-1751173-project-17669670-concurrent-0-485904412
 
 
-**Limitations:**
+##### Limitations
 
-* The `gitlab-runner` journald log only includes output from the
-  `cleanup_exec` script (when `log_level` is `warn` or higher), and there can be
+* The `gitlab-runner` unit's journald log only includes output from the
+  `cleanup_exec` script (when `log_level` is `warn` or higher)
 * There can be a signifcant delay before the messages show up at all.
 
 [registering runners]: https://docs.gitlab.com/runner/register/
