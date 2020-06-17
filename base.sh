@@ -69,15 +69,15 @@ ci_job_stop_vbox()
       local vbox_uuid="${pid_cmdline[4]}"
       found_vbox_vms+=("$vbox_uuid")
       warn "==== Deleting running VirtualBox VM '${vbox_vm}' (UUID='${vbox_uuid}') (pid='$pid')"
-      vboxmanage controlvm "$vbox_uuid" poweroff
-      vboxmanage unregistervm "$vbox_uuid" --delete
+      runuser -l "$CI_RUNNER_USER" -c "vboxmanage controlvm '$vbox_uuid' poweroff"
+      runuser -l "$CI_RUNNER_USER" -c "vboxmanage unregistervm '$vbox_uuid' --delete"
     fi
   done
 
   if [ "${#found_vbox_vms[@]}" -gt 0 ]; then
     warn "____ Deleted ${#found_vbox_vms[@]} VirtualBox VMs (with _CI_JOB_TAG=${_CI_JOB_TAG})"
     warn "==== Pruning any invalid vagrant environments"
-    vagrant global-status --prune
+    runuser -l "$CI_RUNNER_USER" -c 'vagrant global-status --prune'
   else
     notice "____ No leftover running VirtualBox VMs were found (with _CI_JOB_TAG=${_CI_JOB_TAG})"
   fi
