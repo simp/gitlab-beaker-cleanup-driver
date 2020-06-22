@@ -34,17 +34,19 @@ banner()
 
 ci_job_pids()
 {
-  local __CI_JOB_TAG"=${_CI_JOB_TAG:-$1}"
+  local __CI_JOB_TAG="${_CI_JOB_TAG:-$1}"
   # shellcheck disable=SC2153
   grep -l "\b_CI_JOB_TAG=$__CI_JOB_TAG\b" /proc/*/environ | cut -d/ -f3
 }
 
 ci_job_cmdlines()
 {
-  local pids=($(ci_job_pids))
+  local -a pids
+  pids=($(ci_job_pids))
   for pid in "${pids[@]}"; do
     echo "== $pid"
-    local pid_cmdline=($(strings -1 < "/proc/$pid/cmdline"))
+    local -a pid_cmdline
+    pid_cmdline=($(strings -1 < "/proc/$pid/cmdline"))
     echo "${pid_cmdline[0]}"
     echo "${pid_cmdline[@]}"
     echo
@@ -53,17 +55,19 @@ ci_job_cmdlines()
 
 ci_job_stop_vbox()
 {
-  notice "== Cleaning up any leftover VirtualBox VMs (with _CI_JOB_TAG=${_CI_JOB_TAG})"
+  notice "== Cleaning up any leftover VirtualBox VMs (with _CI_JOB_TAG=${___ci_job_tag})"
+  local -a pids
   if [ $# -gt 0 ]; then
-    local pids=("$@")
+    pids=("$@")
   else
     warn "== no pids to check"
     return 0
   fi
 
-  local found_vbox_vms=()
+  local -a found_vbox_vms
   for pid in "${pids[@]}"; do
-    local pid_cmdline=($(strings -1 < "/proc/$pid/cmdline"))
+    local -a pid_cmdline
+    pid_cmdline=($(strings -1 < "/proc/$pid/cmdline"))
     if [[ "$(basename "${pid_cmdline[0]}")" = "VBoxHeadless" ]]; then
       local vbox_vm="${pid_cmdline[2]}"
       local vbox_uuid="${pid_cmdline[4]}"
@@ -109,9 +113,10 @@ ci_job_ensure_user_can_access_script()
 
 ci_job_kill_procs()
 {
-  warn "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$___ci_job_tag)"
+  local -a pids
   if [ $# -gt 0 ]; then
-    local pids=("$@")
+    pids=("$@")
+    warn "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$___ci_job_tag)"
   else
     warn "== no pids to check" && return 0
   fi
@@ -137,9 +142,7 @@ ci_job()
     notice "== Stopping all related processes (with _CI_JOB_TAG=$_CI_JOB_TAG)"
     local ___ci_job_tag="$_CI_JOB_TAG"
     unset _CI_JOB_TAG  # don't kill ourselves
-    local pids
-
-    pids=($(ci_job_pids "$___ci_job_tag")) || true
+    local -a pids=($(ci_job_pids "$___ci_job_tag")) || true
     if [ "${#pids[@]}" -gt 0 ]; then
       ci_job_stop_vbox "${pids[@]}"
       sleep 8 # give post-VM processes a little time to die

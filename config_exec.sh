@@ -13,9 +13,9 @@ cat << JSON
 {
   "driver": {
     "name": "SIMP beaker cleanup driver",
-    "version": "v0.4.1"
+    "version": "v0.4.2-pre0"
   },
-  "builds_dir": "${CI_RUNNER_USER_DIR}/builds/${CUSTOM_ENV_CI_RUNNER_SHORT_TOKEN}/${CUSTOM_ENV_CI_CONCURRENT_PROJECT_ID}/${CUSTOM_ENV_CI_PROJECT_PATH_SLUG}",
+  "builds_dir": "${CI_RUNNER_USER_DIR}/builds/${CUSTOM_ENV_CI_RUNNER_SHORT_TOKEN}/${CUSTOM_ENV_CI_CONCURRENT_ID}/${CUSTOM_ENV_CI_PROJECT_PATH_SLUG}",
   "cache_dir":  "${CI_RUNNER_USER_DIR}/cache/${CUSTOM_ENV_CI_PROJECT_NAMESPACE}/${CUSTOM_ENV_CI_PROJECT_PATH_SLUG}"
 
 }
