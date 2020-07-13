@@ -6,14 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0-rc1]
+
 ### Fixed
 
-- Bug in ci_job_pids to set local `__CI_JOB_TAG`
+- Fixed bug in ci_job_pids to set local `__CI_JOB_TAG`
+- Fixed `line 56: _CI_JOB_TAG: unbound variable` message at the end of base.sh
+
+### Added
+
+- Various bash `local` touch-ups (to be extra careful)
 
 ### Changed
 
 - Build path uses `CI_CONCURRENT_ID` instead of `CI_CONCURRENT_PROJECT_ID`
-- Various bash `local` touch-ups, to be extra careful
+- Build path uses `CI_PROJECT_NAMESPACE/CI_PROJECT_NAME` instead of
+  `CI_PROJECT_PATH_SLUG`
+  - Ref: https://docs.gitlab.com/runner/best_practice/#build-directory
+
 
 ## [0.4.1]
 
@@ -68,5 +78,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.1.1]: https://github.com/simp/gitlab-beaker-cleanup-driver/releases/tag/0.1.1
 [0.4.0]: https://github.com/simp/gitlab-beaker-cleanup-driver/releases/tag/0.4.0
 [0.4.1]: https://github.com/simp/gitlab-beaker-cleanup-driver/releases/tag/0.4.1
-[0.4.2]: https://github.com/simp/gitlab-beaker-cleanup-driver/releases/tag/0.4.2
+[0.4.2]: https://github.com/simp/gitlab-beaker-cleanup-driver/releases/tag/0.5.0
 [Unreleased]: https://github.com/simp/gitlab-beaker-cleanup-driver/branches
