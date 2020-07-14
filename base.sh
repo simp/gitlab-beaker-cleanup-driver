@@ -44,6 +44,7 @@ ci_job_cmdlines()
   local -a pids
   pids=($(ci_job_pids))
   for pid in "${pids[@]}"; do
+    [ -f "/proc/$pid/cmdline" ] || continue
     echo "== $pid"
     local -a pid_cmdline
     pid_cmdline=($(strings -1 < "/proc/$pid/cmdline"))
@@ -66,6 +67,7 @@ ci_job_stop_vbox()
 
   local -a found_vbox_vms
   for pid in "${pids[@]}"; do
+    [ -f "/proc/$pid/cmdline" ] || continue
     local -a pid_cmdline
     pid_cmdline=($(strings -1 < "/proc/$pid/cmdline"))
     if [[ "$(basename "${pid_cmdline[0]}")" = "VBoxHeadless" ]]; then
@@ -121,6 +123,7 @@ ci_job_kill_procs()
     warn "== no pids to check" && return 0
   fi
   for pid in "${pids[@]}"; do
+    [ -f "/proc/$pid/cmdline" ] || continue
     warn "==   $pid    $(cat "/proc/$pid/cmdline" || true)"
   done
   kill "${pids[@]}"
