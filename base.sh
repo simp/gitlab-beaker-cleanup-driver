@@ -54,9 +54,11 @@ ci_job_cmdlines()
   done
 }
 
+
+# $@             = pids of VirtualBox VMs to stop
+# $___ci_job_tag = outside-scope variable with _CI_JOB_TAG to kill
 ci_job_stop_vbox()
 {
-  notice "== Cleaning up any leftover VirtualBox VMs (with _CI_JOB_TAG=${___ci_job_tag})"
   local -a pids
   if [ $# -gt 0 ]; then
     pids=("$@")
@@ -81,11 +83,11 @@ ci_job_stop_vbox()
   done
 
   if [ "${#found_vbox_vms[@]}" -gt 0 ]; then
-    warn "____ Deleted ${#found_vbox_vms[@]} VirtualBox VMs (with _CI_JOB_TAG=${_CI_JOB_TAG})"
+    warn "____ Deleted ${#found_vbox_vms[@]} VirtualBox VMs (with _CI_JOB_TAG=${___ci_job_tag})"
     warn "==== Pruning any invalid vagrant environments"
     runuser -l "$CI_RUNNER_USER" -c 'vagrant global-status --prune'
   else
-    notice "____ No leftover running VirtualBox VMs were found (with _CI_JOB_TAG=${_CI_JOB_TAG})"
+    notice "____ No leftover running VirtualBox VMs were found (with _CI_JOB_TAG=${___ci_job_tag})"
   fi
 }
 
@@ -116,17 +118,29 @@ ci_job_ensure_user_can_access_script()
 ci_job_kill_procs()
 {
   local -a pids
-  if [ $# -gt 0 ]; then
-    pids=("$@")
-    warn "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$___ci_job_tag)"
-  else
-    warn "== no pids to check" && return 0
+}
+
+ci_stop_tagged_jobs()
+{
+  local ___ci_job_tag="$1"
+  local -a pids=($(ci_job_pids "$___ci_job_tag")) || true
+  if [ "${#pids[@]}" -gt 0 ]; then
+    notice "== Cleaning up any leftover VirtualBox VMs (with _CI_JOB_TAG=${___ci_job_tag})"
+    ci_job_stop_vbox "${pids[@]}"
+    sleep 8 # give post-VM processes a little time to die
+
+    pids=($(ci_job_pids "$___ci_job_tag")) || true
+    if [ "${#pids}" -gt 0 ]; then
+      notice "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$_ci_job_tag)"
+      for pid in "${pids[@]}"; do
+        [ -f "/proc/$pid/cmdline" ] || continue
+        warn "==   $pid    $(cat "/proc/$pid/cmdline" || true)"
+      done
+      kill "${pids[@]}"
+    else
+      warn "== no pids to check" && return 0
+    fi
   fi
-  for pid in "${pids[@]}"; do
-    [ -f "/proc/$pid/cmdline" ] || continue
-    warn "==   $pid    $(cat "/proc/$pid/cmdline" || true)"
-  done
-  kill "${pids[@]}"
 }
 
 # Start / stop a CI job
@@ -145,14 +159,7 @@ ci_job()
     notice "== Stopping all related processes (with _CI_JOB_TAG=$_CI_JOB_TAG)"
     local ___ci_job_tag="$_CI_JOB_TAG"
     unset _CI_JOB_TAG  # don't kill ourselves
-    local -a pids=($(ci_job_pids "$___ci_job_tag")) || true
-    if [ "${#pids[@]}" -gt 0 ]; then
-      ci_job_stop_vbox "${pids[@]}"
-      sleep 8 # give post-VM processes a little time to die
-      pids=($(ci_job_pids "$___ci_job_tag")) || true
-      ci_job_kill_procs "${pids[@]}"
-    fi
-
+    ci_stop_tagged_jobs "$___ci_job_tag"
     notice "== Done stopping CI VMs + processes (with _CI_JOB_TAG=$___ci_job_tag)"
     ;;
   esac

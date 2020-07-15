@@ -6,13 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.5.0-rc2]
+## [0.5.0-rc3]
 
 ### Fixed
 
 - Fixed bug in ci_job_pids to set local `__CI_JOB_TAG`
 - Fixed `line 56: _CI_JOB_TAG: unbound variable` message at the end of base.sh
-- Script no longer terminates if "/proc/$pid/cmdline" doesn't exist
+- Fixed `line 84: _CI_JOB_TAG: unbound variable` message at the end of base.sh
+- Script no longer terminates if `/proc/$pid/cmdline` doesn't exist
 
 ### Added
 
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Consolidated stop() logic in `base.sh`
 - Build path uses `CI_CONCURRENT_ID` instead of `CI_CONCURRENT_PROJECT_ID`
 - Build path uses `CI_PROJECT_NAMESPACE/CI_PROJECT_NAME` instead of
   `CI_PROJECT_PATH_SLUG`
@@ -79,5 +81,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.1.1]: https://github.com/simp/gitlab-beaker-cleanup-driver/releases/tag/0.1.1
 [0.4.0]: https://github.com/simp/gitlab-beaker-cleanup-driver/releases/tag/0.4.0
 [0.4.1]: https://github.com/simp/gitlab-beaker-cleanup-driver/releases/tag/0.4.1
-[0.4.2]: https://github.com/simp/gitlab-beaker-cleanup-driver/releases/tag/0.5.0
+[0.5.0]: https://github.com/simp/gitlab-beaker-cleanup-driver/releases/tag/0.5.0
 [Unreleased]: https://github.com/simp/gitlab-beaker-cleanup-driver/branches
