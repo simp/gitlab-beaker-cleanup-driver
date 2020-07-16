@@ -131,7 +131,7 @@ ci_stop_tagged_jobs()
 
     pids=($(ci_job_pids "$___ci_job_tag")) || true
     if [ "${#pids}" -gt 0 ]; then
-      notice "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$_ci_job_tag)"
+      notice "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$___ci_job_tag)"
       for pid in "${pids[@]}"; do
         [ -f "/proc/$pid/cmdline" ] || continue
         warn "==   $pid    $(cat "/proc/$pid/cmdline" || true)"

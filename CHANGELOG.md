@@ -6,13 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.5.0-rc3]
+## [0.5.0-rc4](Unreleased)
 
 ### Fixed
 
 - Fixed bug in ci_job_pids to set local `__CI_JOB_TAG`
 - Fixed `line 56: _CI_JOB_TAG: unbound variable` message at the end of base.sh
 - Fixed `line 84: _CI_JOB_TAG: unbound variable` message at the end of base.sh
+- Fixed `line 134: _CI_JOB_TAG: unbound variable` message at the end of base.sh
 - Script no longer terminates if `/proc/$pid/cmdline` doesn't exist
 
 ### Added
