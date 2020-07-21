@@ -34,7 +34,7 @@ banner()
 
 ci_job_pids()
 {
-  local __CI_JOB_TAG="${_CI_JOB_TAG:-$1}"
+  local __CI_JOB_TAG="${1:-"${_CI_JOB_TAG:-NO_ARG_OR_ENV_VAR_GIVEN}"}"
   # shellcheck disable=SC2153
   grep -l "\b_CI_JOB_TAG=$__CI_JOB_TAG\b" /proc/*/environ | cut -d/ -f3
 }
@@ -103,7 +103,7 @@ ci_job_ensure_user_can_access_script()
     warn "ci_job start (cont'd): build will probably fail with 'permission denied errors'"
   fi
 
-  # Use namei to validate that the non-priv $CI_RUNNER_USER can access the
+  # Use `namei` to validate that the non-priv $CI_RUNNER_USER can access the
   # script AND its parent directories (required by the custom executor)
   local utmpdir
   utmpdir="$(runuser -l "$CI_RUNNER_USER" -c 'mktemp /tmp/beaker-cleanup-driver.XXXXXXXXXX' )"
@@ -124,22 +124,21 @@ ci_stop_tagged_jobs()
 {
   local ___ci_job_tag="$1"
   local -a pids=($(ci_job_pids "$___ci_job_tag")) || true
-  if [ "${#pids[@]}" -gt 0 ]; then
-    notice "== Cleaning up any leftover VirtualBox VMs (with _CI_JOB_TAG=${___ci_job_tag})"
-    ci_job_stop_vbox "${pids[@]}"
-    sleep 8 # give post-VM processes a little time to die
+  if [ "${#pids[@]}" -eq 0 ]; then
+    warn "== no pids to check" && return 0
+  fi
+  notice "== Cleaning up any leftover VirtualBox VMs (with _CI_JOB_TAG=${___ci_job_tag})"
+  ci_job_stop_vbox "${pids[@]}"
+  sleep 8 # give post-VM processes a little time to die
 
-    pids=($(ci_job_pids "$___ci_job_tag")) || true
-    if [ "${#pids}" -gt 0 ]; then
-      notice "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$___ci_job_tag)"
-      for pid in "${pids[@]}"; do
-        [ -f "/proc/$pid/cmdline" ] || continue
-        warn "==   $pid    $(cat "/proc/$pid/cmdline" || true)"
-      done
-      kill "${pids[@]}"
-    else
-      warn "== no pids to check" && return 0
-    fi
+  local -a pids=($(ci_job_pids "$___ci_job_tag")) || true
+  if [ "${#pids}" -gt 0 ]; then
+    notice "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$___ci_job_tag)"
+    for pid in "${pids[@]}"; do
+      [ -f "/proc/$pid/cmdline" ] || continue
+      warn "==   $pid    $(cat "/proc/$pid/cmdline" || true)"
+    done
+    kill "${pids[@]}"
   fi
 }
 
