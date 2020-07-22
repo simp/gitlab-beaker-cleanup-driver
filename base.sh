@@ -16,13 +16,13 @@ CI_RUNNER_USER_DIR="${CI_RUNNER_USER_DIR:-/var/lib/$CI_RUNNER_USER}"
 notice()
 {
   echo "${@}"
-  logger -t beaker-cleanup-driver "${@}"
+  logger -t beaker-cleanup-driver -- "${@}"
 }
 
 warn()
 {
   >&2 echo "${@}"
-  logger -t beaker-cleanup-driver "${@}"
+  logger -t beaker-cleanup-driver -- "${@}"
 }
 
 pipe_notice()
