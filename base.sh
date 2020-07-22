@@ -91,12 +91,13 @@ ci_job_stop_vbox()
       local vbox_uuid="${pid_cmdline[4]}"
       found_vbox_vms+=("$vbox_uuid")e
 
-      warn "==== Deleting running VirtualBox VM '${vbox_vm}' (UUID='${vbox_uuid}') (pid='$pid')"
-      pipe_warn < <(runuser -l "$CI_RUNNER_USER" -c "vboxmanage controlvm '$vbox_uuid' poweroff" 2>&1 || \
-        echo "  !! poweroff failed for VM '${vbox_vm}'")
+      warn "==== Powering off running VirtualBox VM '${vbox_vm}' (UUID='${vbox_uuid}') (pid='$pid')"
+      pipe_warn < <(runuser -l "$CI_RUNNER_USER" -c "vboxmanage controlvm '$vbox_uuid' poweroff" 2>&1 ) || \
+        warn "  !! poweroff failed for VM '${vbox_vm}'"
 
-      pipe_warn < <(runuser -l "$CI_RUNNER_USER" -c "vboxmanage unregistervm '$vbox_uuid' --delete" 2>&1 || \
-        echo "  !! unregistervm failed for VM '${vbox_vm}'")
+      warn "==== Unregistering VirtualBox VM '${vbox_vm}' (UUID='${vbox_uuid}') (pid='$pid')"
+      pipe_warn < <(runuser -l "$CI_RUNNER_USER" -c "vboxmanage unregistervm '$vbox_uuid' --delete" 2>&1) || \
+        warn "  !! unregistervm failed for VM '${vbox_vm}'"
     fi
   done
 
