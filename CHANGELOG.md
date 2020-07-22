@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.5.0-rc5](Unreleased)
+## [0.5.0-rc6](Unreleased)
 
 ### Fixed
 
@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Various bash `local` touch-ups (to be extra careful)
+- `pipe_warn` function to stream and log output from important commands
 
 ### Changed
 

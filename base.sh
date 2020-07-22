@@ -25,6 +25,20 @@ warn()
   logger -t beaker-cleanup-driver "${@}"
 }
 
+pipe_notice()
+{
+   while IFS="" read -r data; do
+     notice "$data"
+   done
+}
+
+pipe_warn()
+{
+   while IFS="" read -r data; do
+     warn "$data"
+   done
+}
+
 
 banner()
 {
@@ -77,15 +91,15 @@ ci_job_stop_vbox()
       local vbox_uuid="${pid_cmdline[4]}"
       found_vbox_vms+=("$vbox_uuid")
       warn "==== Deleting running VirtualBox VM '${vbox_vm}' (UUID='${vbox_uuid}') (pid='$pid')"
-      runuser -l "$CI_RUNNER_USER" -c "vboxmanage controlvm '$vbox_uuid' poweroff"
-      runuser -l "$CI_RUNNER_USER" -c "vboxmanage unregistervm '$vbox_uuid' --delete"
+      runuser -l "$CI_RUNNER_USER" -c "vboxmanage controlvm '$vbox_uuid' poweroff" 2>&1 | pipe_warn
+      runuser -l "$CI_RUNNER_USER" -c "vboxmanage unregistervm '$vbox_uuid' --delete" 2>&1 | pipe_warn
     fi
   done
 
   if [ "${#found_vbox_vms[@]}" -gt 0 ]; then
     warn "____ Deleted ${#found_vbox_vms[@]} VirtualBox VMs (with _CI_JOB_TAG=${___ci_job_tag})"
     warn "==== Pruning any invalid vagrant environments"
-    runuser -l "$CI_RUNNER_USER" -c 'vagrant global-status --prune'
+    runuser -l "$CI_RUNNER_USER" -c 'vagrant global-status --prune' 2>&1 | pipe_warn
   else
     notice "____ No leftover running VirtualBox VMs were found (with _CI_JOB_TAG=${___ci_job_tag})"
   fi
@@ -127,6 +141,10 @@ ci_stop_tagged_jobs()
   if [ "${#pids[@]}" -eq 0 ]; then
     warn "== no pids to check" && return 0
   fi
+
+  notice "== Stopping any vagrant boxes running out of '$CUSTOM_ENV_CI_PROJECT_DIR/.vagrant/beaker_vagrant_files/default.yml'"
+  runuser -l "$CI_RUNNER_USER" -c 'vagrant global-status --prune' | grep "$CUSTOM_ENV_CI_PROJECT_DIR/.vagrant/beaker_vagrant_files/default.yml" | xargs -i runuser -l "$CI_RUNNER_USER" -c  "vagrant destroy -f {}" 2>&1 | pipe_warn
+
   notice "== Cleaning up any leftover VirtualBox VMs (with _CI_JOB_TAG=${___ci_job_tag})"
   ci_job_stop_vbox "${pids[@]}"
   sleep 8 # give post-VM processes a little time to die
