@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.5.0-rc6](Unreleased)
+## [0.5.0-rc7](Unreleased)
 
 ### Fixed
 
@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `line 84: _CI_JOB_TAG: unbound variable` message at the end of base.sh
 - Fixed `line 133: _CI_JOB_TAG: unbound variable` message at the end of base.sh
 - Script no longer terminates if `/proc/$pid/cmdline` doesn't exist
+- Error checking and logging for various commands
 
 ### Added
 

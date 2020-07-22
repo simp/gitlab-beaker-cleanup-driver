@@ -85,21 +85,28 @@ ci_job_stop_vbox()
   for pid in "${pids[@]}"; do
     [ -f "/proc/$pid/cmdline" ] || continue
     local -a pid_cmdline
-    pid_cmdline=($(strings -1 < "/proc/$pid/cmdline"))
+    pid_cmdline=($(strings -1 < "/proc/$pid/cmdline")) || true
     if [[ "$(basename "${pid_cmdline[0]}")" = "VBoxHeadless" ]]; then
       local vbox_vm="${pid_cmdline[2]}"
       local vbox_uuid="${pid_cmdline[4]}"
-      found_vbox_vms+=("$vbox_uuid")
+      found_vbox_vms+=("$vbox_uuid")e
+
       warn "==== Deleting running VirtualBox VM '${vbox_vm}' (UUID='${vbox_uuid}') (pid='$pid')"
-      runuser -l "$CI_RUNNER_USER" -c "vboxmanage controlvm '$vbox_uuid' poweroff" 2>&1 | pipe_warn
-      runuser -l "$CI_RUNNER_USER" -c "vboxmanage unregistervm '$vbox_uuid' --delete" 2>&1 | pipe_warn
+      if ! runuser -l "$CI_RUNNER_USER" -c "vboxmanage controlvm '$vbox_uuid' poweroff" 2>&1 | pipe_warn; then
+        warn "  !! poweroff failed for VM '${vbox_vm}'"
+      fi
+      if ! runuser -l "$CI_RUNNER_USER" -c "vboxmanage unregistervm '$vbox_uuid' --delete" 2>&1 | pipe_warn; then
+        warn "  !! unregistervm failed for VM '${vbox_vm}'"
+      fi
     fi
   done
 
   if [ "${#found_vbox_vms[@]}" -gt 0 ]; then
     warn "____ Deleted ${#found_vbox_vms[@]} VirtualBox VMs (with _CI_JOB_TAG=${___ci_job_tag})"
     warn "==== Pruning any invalid vagrant environments"
-    runuser -l "$CI_RUNNER_USER" -c 'vagrant global-status --prune' 2>&1 | pipe_warn
+    if ! runuser -l "$CI_RUNNER_USER" -c 'vagrant global-status --prune' 2>&1 | pipe_warn; then
+      warn "  !! 'vagrant global-status --prune' failed with exit code '$?'"
+    fi
   else
     notice "____ No leftover running VirtualBox VMs were found (with _CI_JOB_TAG=${___ci_job_tag})"
   fi
@@ -143,7 +150,12 @@ ci_stop_tagged_jobs()
   fi
 
   notice "== Stopping any vagrant boxes running out of '$CUSTOM_ENV_CI_PROJECT_DIR/.vagrant/beaker_vagrant_files/default.yml'"
-  runuser -l "$CI_RUNNER_USER" -c 'vagrant global-status --prune' | grep "$CUSTOM_ENV_CI_PROJECT_DIR/.vagrant/beaker_vagrant_files/default.yml" | xargs -i runuser -l "$CI_RUNNER_USER" -c  "vagrant destroy -f {}" 2>&1 | pipe_warn
+  if ! runuser -l "$CI_RUNNER_USER" -c 'vagrant global-status --prune' \
+    | grep "$CUSTOM_ENV_CI_PROJECT_DIR/.vagrant/beaker_vagrant_files/default.yml" \
+    | xargs -i runuser -l "$CI_RUNNER_USER" -c  "vagrant destroy -f {}" 2>&1 \
+    | pipe_warn ; then
+    warn "    !! Stopping any vagrant boxes exited with '$?'"
+  fi
 
   notice "== Cleaning up any leftover VirtualBox VMs (with _CI_JOB_TAG=${___ci_job_tag})"
   ci_job_stop_vbox "${pids[@]}"
