@@ -30,7 +30,7 @@ the job failed, was cancelled, or timed out (probably).
    * (Using their respective tooling in order to properly reclaim their disk resources)
 
 It is designed to run multi-node acceptance tests using Puppet's
-[Beaker][beaker] while avoiding the of the shell executor's tendency to
+[Beaker][beaker] while avoiding the shell executor's tendency to
 accumulate hundreds of gigs of disk space and running VM processes, left
 over from jobs that didn't terminate cleanly.
 
@@ -65,7 +65,8 @@ chmod -R g=u-w "$CUSTOM_EXECUTOR_DIR"
 
 ### 2. Registering new Runner(s) using the configuration template file
 
-A Gitlab Runner [configuration template file][configuration template file] is provided to simplify registration.
+A Gitlab Runner [configuration template file][configuration template file]
+is provided to simplify registration.
 
 1. Tailor the template file `beaker-cleanup-driver.template.toml`
 
