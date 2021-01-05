@@ -10,8 +10,15 @@ install: skip
 
 jobs:
   include:
-    - stage: check
-      name: 'Validate with shellcheck'
-      script:
-        - "git ls-files --exclude=\\*.sh --ignored | xargs shellcheck -e SC2015 -e SC2207"
+    ###  Testing on Travis CI is indefinitely disabled
+    ###
+    ###  See:
+    ###    * https://blog.travis-ci.com/2020-11-02-travis-ci-new-billing
+    ###    * https://simp-project.atlassian.net/browse/SIMP-8810
+    ###
+    ###
+    ###    - stage: check
+    ###      name: 'Validate with shellcheck'
+    ###      script:
+    ###        - "git ls-files --exclude=\\*.sh --ignored | xargs shellcheck -e SC2015 -e SC2207"
 
