@@ -8,7 +8,13 @@ default:
 shell_lint:
   stage: 'validation'
   tags: ['docker']
+  before_script:
+    - |
+      { command -v git && command -v shellcheck; } || \
+      if command -v apt-get; then
+        apt-get update &> /dev/null
+        apt-get install -y git shellcheck &> /dev/null
+      fi ||:
   script:
-    - 'command -v shellcheck || if command -v apt-get; then apt-get update; apt-get install -y shellcheck; fi ||:'
-    - git ls-files --exclude=\\*.sh --ignored | xargs shellcheck -e SC2015 -e SC2207
+    - 'git ls-files --exclude=\*.sh --ignored | xargs shellcheck -e SC2015 -e SC2207'
   allow_failure: true
