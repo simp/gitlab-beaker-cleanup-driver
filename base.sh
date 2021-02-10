@@ -11,7 +11,9 @@ _CI_JOB_TAG="${_CI_JOB_TAG:-"runner-${CUSTOM_ENV_CI_RUNNER_ID}-project-${CUSTOM_
 
 # Non-privileged user to execute the actual job script
 CI_RUNNER_USER="${CI_RUNNER_USER:-gitlab-runner}"
-CI_RUNNER_USER_DIR="${CI_RUNNER_USER_DIR:-/var/lib/$CI_RUNNER_USER}"
+_CI_RUNNER_USER_DIR_autodetect="$(getent passwd "$CI_RUNNER_USER" | cut -d: -f6)"
+CI_RUNNER_USER_DIR="${CI_RUNNER_USER_DIR:-${_CI_RUNNER_USER_DIR_autodetect:-/var/lib/$CI_RUNNER_USER}}"
+unset _CI_RUNNER_USER_DIR_autodetect
 
 notice()
 {
@@ -111,25 +113,53 @@ ci_job_stop_vbox()
   fi
 }
 
+
+# Issue:
+#
+# GitLab's custom executor places all scripts in /tmp
+#    https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4804
+#
+# Problems:
+#
+# 1. Custom executors run and write files as root, but we run scripts as
+#    gitlab-runner, which can't read the files (or traverse the parent
+#    directories) that the executor creates.
+# 2. On locked-down systems, /tmp is mounted with `noexec`
+#
 ci_job_ensure_user_can_access_script()
 {
-  chown "$CI_RUNNER_USER" "$1"
+  chown "$CI_RUNNER_USER" "$1" # give user permission to access script
   # shellcheck disable=SC2016
-  [ -z "${TMPDIR:-}" ] && warn 'ci_job start: $TMPDIR env var is empty!'
+  [ -z "${TMPDIR:-}" ] && warn '!! ci_job start: $TMPDIR env var is empty!'
   if [[ "$1" == "$TMPDIR"* ]]; then
-    chown -R "$CI_RUNNER_USER" "$TMPDIR"
+    # Give user permission to traverse each parent directory below "$TMPDIR"
+    # These directories should all be Gitlab Runner-generated
+    local sub_dirs
+    local tmp_path
+    IFS="/" read -a sub_dirs <<< "${1#"$TMPDIR"/}"
+    tmp_path="$TMPDIR"
+    for i in "${sub_dirs[@]}"; do
+      tmp_path="$tmp_path/$i"
+      chown "$CI_RUNNER_USER" "$tmp_path"
+    done
   else
+    warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     warn "ci_job start: TMPDIR does NOT contain the target script! (TMPDIR='$TMPDIR' script='$1')"
     warn "ci_job start (cont'd): build will probably fail with 'permission denied errors'"
+    warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    warn "ci_job start: TMPDIR does NOT contain the target script! (TMPDIR='$TMPDIR' script='$1')"
   fi
 
   # Use `namei` to validate that the non-priv $CI_RUNNER_USER can access the
   # script AND its parent directories (required by the custom executor)
   local utmpdir
-  utmpdir="$(runuser -l "$CI_RUNNER_USER" -c 'mktemp /tmp/beaker-cleanup-driver.XXXXXXXXXX' )"
+  utmpdir="$(runuser -l "$CI_RUNNER_USER" -c "mktemp -p '' beaker-cleanup-driver.XXXXXXXXXX" )"
+
   if ! runuser -l "$CI_RUNNER_USER" -c "namei -l '$1' &> '$utmpdir' "; then
+    warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     warn "$(cat "$utmpdir")"
     warn "ci_job start: FATAL: user $CI_RUNNER_USER cannot access '$1' (or one of its parents)!"
+    warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     rm -f "$utmpdir"
     echo exit 2
   fi

@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Documentation for environment variables
+
+### Fixed
+
+- `ci_job_ensure_user_can_access_script` only chowns
+  directory lineage from gitlab runner script in `base.sh`
+  See note about [gitlab-runner#4804]
+
+[gitlab-runner#4804]: https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4804
+
+
 ## [0.5.0]
 
 ### Fixed
@@ -87,4 +100,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.4.0]: https://github.com/simp/gitlab-beaker-cleanup-driver/releases/tag/0.4.0
 [0.4.1]: https://github.com/simp/gitlab-beaker-cleanup-driver/releases/tag/0.4.1
 [0.5.0]: https://github.com/simp/gitlab-beaker-cleanup-driver/releases/tag/0.5.0
-[Unreleased]: https://github.com/simp/gitlab-beaker-cleanup-driver/branches
+[Unreleased]: https://github.com/simp/gitlab-beaker-cleanup-driver/compare/0.5.0...HEAD

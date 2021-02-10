@@ -8,6 +8,7 @@
   * [1. Installing the executor files](#1-installing-the-executor-files)
   * [2. Registering new Runner(s) using the configuration template file](#2-registering-new-runners-using-the-configuration-template-file)
 * [Reference](#reference)
+  * [Environment variables](#environment-variables)
   * [How the executor knows what VMs to clean up](#how-the-executor-knows-what-vms-to-clean-up)
   * [Troubleshooting](#troubleshooting)
     * [journald logs on syslog identifier `beaker-cleanup-driver`](#journald-logs-on-syslog-identifier-beaker-cleanup-driver)
@@ -51,7 +52,7 @@ path and the `*.sh` scripts:
 
 ```sh
 
-# We'll keep using $CUSTOM_EXECUTOR_DIR in the next example, too
+# We'll keep using this $CUSTOM_EXECUTOR_DIR in the next example, too
 CUSTOM_EXECUTOR_DIR=/opt/simp/gitlab-runner/beaker-cleanup-driver
 THIS_REPOSITORY_URL="<the url of this git repository>"
 
@@ -91,6 +92,17 @@ gitlab-runner register \
 For more information, see GitLab's documentation about [Registering Runners][registering runners]
 
 ## Reference
+
+
+### Environment variables
+
+You can set environment variables (in the `job_env` key of the executor's `config_exec.sh` script<sup>[[0]]</sup>)
+
+
+| Environment Variable | Purpose                                                             | Default                      |
+|----------------------|---------------------------------------------------------------------|------------------------------|
+| `CI_RUNNER_USER`     | non-privileged build user                                           | `gitlab-runner`              |
+| `CI_RUNNER_USER_DIR` | parent path for non-privileged build user's build/cache directories | `/var/lib/${CI_RUNNER_USER}` |
 
 ### How the executor knows what VMs to clean up
 
@@ -167,3 +179,4 @@ the Runner console output at the beginning of every exec stage and sub-stage):
 [configuration template file]: https://docs.gitlab.com/runner/register/#runners-configuration-template-file
 [custom executor]: https://docs.gitlab.com/runner/executors/custom.html
 [beaker]: https://github.com/puppetlabs/beaker
+[0]: https://docs.gitlab.com/runner/executors/custom.html#config
