@@ -12,14 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- `ci_job_ensure_user_can_access_script` only chowns
-  directory lineage from gitlab runner script in `base.sh`
-  See note about [gitlab-runner#4804]
+- Rewrote the code that execute the Runner-generated stage scripts as a
+  non-privileged user (gitlab-runner)
+  - This prevents various edge case failures, particularly on hardened runners
+  - The implementation is almost comedically simple, but more robust (and,
+    counter-intuitively: secure) than the previous code
+  - For details, see note in `base.sh` comments about [gitlab-runner#4804]
 
-[gitlab-runner#4804]: https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4804
+### Removed
 
+- Removed `ci_job_ensure_user_can_access_script` (no longer needed)
 
-## [0.5.0]
+## [0.5.0] - 2020-09-04
 
 ### Fixed
 
@@ -46,14 +50,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ci_job_pids()` gives `$1` precedence over `$_CI_JOB_TAG`
 
 
-## [0.4.1]
+## [0.4.1] - 2020-06-17
 
 ### Fixed
 
 - 0.4.0 cleanup routines didn't clean up VMs because they ran `vboxmanage` and
   `vagrant` as `root` instead of `$CI_RUNNER_USER`.
 
-## [0.4.0]
+## [0.4.0] - 2020-06-10
 
 ### Added
 
@@ -76,7 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Safety checks in `ci_job()`
 
 
-## [0.1.1]
+## [0.1.1] - 2020-05-27
 
 ### Added
 
@@ -94,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
+[gitlab-runner#4804]: https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4804
 
 [0.1.0]: https://github.com/simp/gitlab-beaker-cleanup-driver/releases/tag/0.1.0
 [0.1.1]: https://github.com/simp/gitlab-beaker-cleanup-driver/releases/tag/0.1.1
