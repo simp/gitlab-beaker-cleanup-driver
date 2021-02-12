@@ -18,13 +18,21 @@ unset _CI_RUNNER_USER_DIR_autodetect
 notice()
 {
   echo "${@}"
-  logger -t beaker-cleanup-driver -- "${@}"
+  if command -v systemd-cat > /dev/null; then
+    echo "${@}" | systemd-cat -t beaker-cleanup-driver -p info
+  else
+    logger -t beaker-cleanup-driver -- "${@}"
+  fi
 }
 
 warn()
 {
   >&2 echo "${@}"
-  logger -t beaker-cleanup-driver -- "${@}"
+  if command -v systemd-cat > /dev/null; then
+    echo "${@}" | systemd-cat -t beaker-cleanup-driver -p warning
+  else
+    logger -t beaker-cleanup-driver -- "${@}"
+  fi
 }
 
 pipe_notice()

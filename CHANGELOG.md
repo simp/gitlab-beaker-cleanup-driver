@@ -12,16 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Rewrote the code that execute the Runner-generated stage scripts as a
-  non-privileged user (gitlab-runner)
-  - This prevents various edge case failures, particularly on hardened runners
-  - The implementation is almost comedically simple, but more robust (and,
-    counter-intuitively: secure) than the previous code
+- Rewrote non-priv user stage script execution logic
+  - Fixes failures on hardened systems where `/tmp` is mounted with `noexec`
+  - Fixes security vulnerability that could be exploited to leak secrets to
+    malicious code from other jobs/projects
   - For details, see note in `base.sh` comments about [gitlab-runner#4804]
+- Fixed missing logs in some systems' journald by preferring `systemd-cat`
+  when it is available
+  - If `system-cat` is not available, system logging falls back to `logger`
 
 ### Removed
 
-- Removed `ci_job_ensure_user_can_access_script` (no longer needed)
+- `ci_job_ensure_user_can_access_script` function (no longer needed)
 
 ## [0.5.0] - 2020-09-04
 
