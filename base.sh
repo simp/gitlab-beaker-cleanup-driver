@@ -121,12 +121,6 @@ ci_job_stop_vbox()
   fi
 }
 
-
-ci_job_kill_procs()
-{
-  local -a pids
-}
-
 ci_stop_tagged_jobs()
 {
   local ___ci_job_tag="$1"

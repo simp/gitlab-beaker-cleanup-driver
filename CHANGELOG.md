@@ -11,11 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed `line 148: pids: unbound variable` message at the end of base.sh
 
-### Added
-
-### Changed
-
 ### Removed
+
+- Unused `ci_job_kill_procs()` function
 
 ## [0.6.0] - 2021-03-03
 
