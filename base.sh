@@ -130,7 +130,8 @@ ci_job_kill_procs()
 ci_stop_tagged_jobs()
 {
   local ___ci_job_tag="$1"
-  local -a pids=($(ci_job_pids "$___ci_job_tag")) || true
+  local -a pids
+  pids=($(ci_job_pids "$___ci_job_tag")) || true
   if [ "${#pids[@]}" -eq 0 ]; then
     warn "== no pids to check" && return 0
   fi
@@ -144,7 +145,7 @@ ci_stop_tagged_jobs()
   ci_job_stop_vbox "${pids[@]}"
   sleep 8 # give post-VM processes a little time to die
 
-  local -a pids=($(ci_job_pids "$___ci_job_tag")) || true
+  pids=($(ci_job_pids "$___ci_job_tag")) || true
   if [ "${#pids}" -gt 0 ]; then
     notice "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$___ci_job_tag)"
     for pid in "${pids[@]}"; do
