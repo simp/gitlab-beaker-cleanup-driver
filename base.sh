@@ -49,35 +49,32 @@ pipe_warn()
    done
 }
 
-
 banner()
 {
   banner="======================================="
   notice "$(printf "\n\n%s\n\n    %s:  _CI_JOB_TAG=%s\n%s\n\n" "$banner" "${2:-${1:-$0}}" "$_CI_JOB_TAG" "$banner")"
 }
 
+# Return PIDs with a matching _CI_JOB_TAG env variable + cmdline
+# Filters out the PIDs of the current script and function
+#
+# $1 = value of $_CI_JOB_TAG to match
 ci_job_pids()
 {
   local __CI_JOB_TAG="${1:-"${_CI_JOB_TAG:-NO_ARG_OR_ENV_VAR_GIVEN}"}"
+  local -a pids=()
   # shellcheck disable=SC2153
-  grep -l "\b_CI_JOB_TAG=$__CI_JOB_TAG\b" /proc/*/environ | cut -d/ -f3
-}
-
-ci_job_cmdlines()
-{
-  local -a pids
-  pids=($(ci_job_pids))
-  for pid in "${pids[@]}"; do
+  for pid in $(grep -l "\b_CI_JOB_TAG=$__CI_JOB_TAG\b" /proc/*/environ | cut -d/ -f3); do
+    [ "$pid" == "$$" ] && continue
+    [ "$pid" == "self" ] && continue
+    [ "$pid" == "$BASHPID" ] && continue
     [ -f "/proc/$pid/cmdline" ] || continue
-    echo "== $pid"
-    local -a pid_cmdline
-    pid_cmdline=($(strings -1 < "/proc/$pid/cmdline"))
-    echo "${pid_cmdline[0]}"
-    echo "${pid_cmdline[@]}"
-    echo
+    ## warn "~~%%: $pid  $(cat "/proc/$pid/cmdline" || true)"
+    pids+=($pid)
   done
-}
 
+  [ "${#pids[@]}" -gt 0 ] && echo "${pids[@]}"
+}
 
 # $@             = pids of VirtualBox VMs to stop
 # $___ci_job_tag = outside-scope variable with _CI_JOB_TAG to kill
@@ -121,13 +118,20 @@ ci_job_stop_vbox()
   fi
 }
 
+# Ensure that all processes running with a matching value in $_CI_JOB_TAG are
+# killed
+#
+# - Attempt to gracefully shut down VMs with the Beaker-generated Vagrantfile
+# - Attempt to gracefully shut down all tagged VirtualBox processes
+# - `kill` any tagged processes that are still running
+#
+#   $1: value of $_CI_JOB_TAG
 ci_stop_tagged_jobs()
 {
   local ___ci_job_tag="$1"
-  local -a pids
-  pids=($(ci_job_pids "$___ci_job_tag")) || true
+  local -a pids=($(ci_job_pids "$___ci_job_tag")) || true
   if [ "${#pids[@]}" -eq 0 ]; then
-    warn "== no pids to check" && return 0
+    warn "== no tagged pids to kill (with _CI_JOB_TAG=$___ci_job_tag)" && return 0
   fi
 
   notice "== Stopping any vagrant boxes running out of '$CUSTOM_ENV_CI_PROJECT_DIR/.vagrant/beaker_vagrant_files/default.yml'"
@@ -140,13 +144,14 @@ ci_stop_tagged_jobs()
   sleep 8 # give post-VM processes a little time to die
 
   pids=($(ci_job_pids "$___ci_job_tag")) || true
-  if [ "${#pids}" -gt 0 ]; then
-    notice "== killing leftover pids (${#pids[@]}) (with _CI_JOB_TAG=$___ci_job_tag)"
+  if [ "${#pids[@]}" -gt 0 ]; then
+    notice "== killing ${#pids[@]} leftover pids (with _CI_JOB_TAG=$___ci_job_tag):"
     for pid in "${pids[@]}"; do
-      [ -f "/proc/$pid/cmdline" ] || continue
       warn "==   $pid    $(cat "/proc/$pid/cmdline" || true)"
     done
     kill "${pids[@]}"
+  else
+    warn "== no tagged pids left to kill (with _CI_JOB_TAG=$___ci_job_tag)"
   fi
 }
 
@@ -193,10 +198,8 @@ ci_job()
     ;;
   stop)
     notice "== Stopping all related processes (with _CI_JOB_TAG=$_CI_JOB_TAG)"
-    local ___ci_job_tag="$_CI_JOB_TAG"
-    unset _CI_JOB_TAG  # (don't kill ourselves)
-    ci_stop_tagged_jobs "$___ci_job_tag"
-    notice "== Done stopping CI VMs + processes (with _CI_JOB_TAG=$___ci_job_tag)"
+    ci_stop_tagged_jobs "$_CI_JOB_TAG"
+    notice "== Done stopping CI VMs + processes (with _CI_JOB_TAG=$_CI_JOB_TAG)"
     ;;
   esac
 }

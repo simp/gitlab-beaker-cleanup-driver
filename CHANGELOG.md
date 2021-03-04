@@ -9,11 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed `line 148: pids: unbound variable` message at the end of base.sh
+- Fixed root cause of `pids: unbound variable` messages in base.sh
+  - These were caused by referencing empty arrays, which is considered unset in
+    Bash >= 4.1 < 4.4
+  - For reference: EL7: Bash 4.2, EL8: Bash 4.4, Fedora >= 30: Bash 5.0+
+
+### Changed
+
+- Updated `ci_job_pids()` to only return tagged processes that have a
+  cmdline and aren't the executing script (e.g., `cleanup_exec.sh`) or its
+  functions
+- Simplified logic in `ci_job stop()` and `ci_stop_tagged_jobs()`
 
 ### Removed
 
 - Unused `ci_job_kill_procs()` function
+- Unused `ci_job_cmdlines()` function
 
 ## [0.6.0] - 2021-03-03
 
